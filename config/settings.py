@@ -6,9 +6,11 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # LLM — Google Gemini
+    # LLM
+    agent_model: str = "ollama/gemma4:26b"
+    openrouter_api_key: str = ""
     google_api_key: str = ""
-    gemini_model: str = "gemini/gemini-1.5-pro"
+    gemini_model: str = "gemini/gemini-2.5-flash"
 
     # GitHub
     github_token: str = ""

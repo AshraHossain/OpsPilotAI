@@ -22,7 +22,7 @@ def build_incident_resolver_agent() -> Agent:
             "the MTTR. You are calm, systematic, and always correlate signals from "
             "multiple sources before proposing action."
         ),
-        llm=os.getenv("AGENT_MODEL", "ollama/llama3.1:latest"),
+        llm=os.getenv("AGENT_MODEL", "ollama/gemma4:26b"),
         tools=get_tools("prometheus") + get_tools("kubernetes") + get_tools("github"),
         verbose=True,
         allow_delegation=False,

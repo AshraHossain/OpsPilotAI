@@ -20,7 +20,7 @@ def build_cicd_monitor_agent() -> Agent:
             "error that caused a build to break, and you know when a fix is simple "
             "versus when it signals a deeper infrastructure problem."
         ),
-        llm=os.getenv("AGENT_MODEL", "ollama/llama3.1:latest"),
+        llm=os.getenv("AGENT_MODEL", "ollama/gemma4:26b"),
         tools=get_tools("github"),
         verbose=True,
         allow_delegation=False,

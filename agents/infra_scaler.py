@@ -19,7 +19,7 @@ def build_infra_scaler_agent() -> Agent:
             "You understand HPA behavior, resource requests/limits, and the difference "
             "between a traffic spike that will self-resolve versus one requiring a replica increase."
         ),
-        llm=os.getenv("AGENT_MODEL", "ollama/llama3.1:latest"),
+        llm=os.getenv("AGENT_MODEL", "ollama/gemma4:26b"),
         tools=get_tools("prometheus") + get_tools("kubernetes"),
         verbose=True,
         allow_delegation=False,
