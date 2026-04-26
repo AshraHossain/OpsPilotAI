@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     # LLM
     agent_model: str = "ollama/gemma4:26b"
     openrouter_api_key: str = ""
+    moonshot_api_key: str = ""
     google_api_key: str = ""
     gemini_model: str = "gemini/gemini-2.5-flash"
 
