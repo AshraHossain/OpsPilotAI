@@ -1,0 +1,38 @@
+# Core framework
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+
+# Agent orchestration
+crewai>=0.51.0
+crewai-tools>=0.8.0
+
+# LLM & tool layer — Google Gemini
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-google-genai>=1.0.0
+google-generativeai>=0.7.0
+
+# GitHub integration
+PyGithub>=2.3.0
+
+# Kubernetes integration
+kubernetes>=29.0.0
+
+# Prometheus integration
+prometheus-api-client>=0.5.3
+prometheus-client>=0.20.0
+requests>=2.32.0
+
+# AWS
+boto3>=1.34.0
+
+# Config & utilities
+python-dotenv>=1.0.0
+pyyaml>=6.0
+structlog>=24.1.0
+
+# Testing & eval
+pytest>=8.2.0
+p

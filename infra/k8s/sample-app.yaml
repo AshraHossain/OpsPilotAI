@@ -1,0 +1,63 @@
+# Sample app deployment — stable version (healthy)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-api
+  namespace: opspilot-demo
+  labels:
+    app: sample-api
+    version: stable
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sample-api
+  template:
+    metadata:
+      labels:
+        app: sample-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: sample-api
+          image: hashicorp/http-echo:latest
+          args:
+            - "-text=OpsPilot sample API running"
+            - "-listen=:8080"
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-api
+  namespace: opspilot-demo
+spec:
+  selector:
+    app: sample-api
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP

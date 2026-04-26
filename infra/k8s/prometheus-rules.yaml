@@ -1,0 +1,43 @@
+# Prometheus alert rules for the sample app
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: opspilot-alerts
+  namespace: opspilot-demo
+spec:
+  groups:
+    - name: opspilot.rules
+      rules:
+        - alert: HighCPUUsage
+          expr: |
+            rate(container_cpu_usage_seconds_total{namespace="opspilot-demo"}[5m]) > 0.8
+          for: 2m
+          labels:
+            severity: critical
+            deployment: sample-api
+          annotations:
+            summary: "High CPU usage on sample-api"
+            description: "CPU usage above 80% for 2+ minutes"
+
+        - alert: PodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="opspilot-demo"}[15m]) > 0
+          for: 1m
+          labels:
+            severity: critical
+            deployment: sample-api
+          annotations:
+            summary: "Pod is crash looping"
+            description: "{{ $labels.pod }} has restarted more than once in 15 minutes"
+
+        - alert: HighMemoryPressure
+          expr: |
+            container_memory_usage_bytes{namespace="opspilot-demo"} /
+            container_spec_memory_limit_bytes{namespace="opspilot-demo"} > 0.85
+          for: 2m
+          labels:
+            severity: warning
+            deployment: sample-api
+          annotations:
+            summary: "High memory usage on sample-api"
+            description: "Memory usage above 85% of limit"

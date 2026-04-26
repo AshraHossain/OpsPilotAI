@@ -1,0 +1,31 @@
+# infra/grafana/grafana-configmap.yaml
+# -------------------------------------
+# Auto-imports the OpsPilot dashboard into Grafana via ConfigMap.
+# Grafana sidecar (grafana/grafana Helm chart) watches for ConfigMaps
+# with label grafana_dashboard=1 and auto-provisions them.
+#
+# Usage (if deploying Grafana via Helm):
+#   helm install grafana grafana/grafana \
+#     --namespace monitoring \
+#     --set sidecar.dashboards.enabled=true \
+#     --set sidecar.dashboards.label=grafana_dashboard
+#
+# Then apply this ConfigMap:
+#   kubectl apply -f infra/grafana/grafana-configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opspilot-grafana-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app: opspilot-ai
+data:
+  opspilot-dashboard.json: |
+    # (paste or kustomize-include the contents of opspilot-dashboard.json here)
+    # For automated pipelines, use:
+    #   kubectl create configmap opspilot-grafana-dashboard \
+    #     --from-file=opspilot-dashboard.json=infra/grafana/opspilot-dashboard.json \
+    #     --namespace monitoring \
+    #     -o yaml --dry-run=client | kubectl apply -f -

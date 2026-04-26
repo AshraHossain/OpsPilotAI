@@ -1,0 +1,76 @@
+# infra/eks/cluster.yaml
+# ----------------------
+# eksctl ClusterConfig for OpsPilot AI on AWS EKS
+#
+# Usage:
+#   eksctl create cluster -f infra/eks/cluster.yaml
+#   eksctl delete cluster -f infra/eks/cluster.yaml
+#
+# Prerequisites:
+#   brew install eksctl awscli helm
+#   aws configure  (set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY)
+
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: opspilot-cluster
+  region: us-east-1
+  version: "1.29"
+  tags:
+    project: opspilot-ai
+    env: production
+
+iam:
+  withOIDC: true          # enables IRSA (IAM Roles for Service Accounts)
+  serviceAccounts:
+    - metadata:
+        name: opspilot-sa
+        namespace: opspilot
+        labels:
+          app: opspilot-ai
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      # Custom policy for additional permissions (see iam-policy.json)
+      # attachPolicy:
+      #   Version: "2012-10-17"
+      #   Statement: !include iam-policy.json
+
+managedNodeGroups:
+  - name: opspilot-ng
+    instanceType: t3.medium
+    minSize: 2
+    maxSize: 6
+    desiredCapacity: 2
+    volumeSize: 30
+    amiFamily: AmazonLinux2
+    labels:
+      role: worker
+    tags:
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/opspilot-cluster: "owned"
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        cloudWatch: true
+        albIngress: true
+
+addons:
+  - name: vpc-cni
+    version: latest
+  - name: coredns
+    version: latest
+  - name: kube-proxy
+    version: latest
+  - name: aws-ebs-csi-driver
+    version: latest
+
+cloudWatch:
+  clusterLogging:
+    enableTypes:
+      - api
+      - audit
+      - authenticator
+      - controllerManager
+      - scheduler

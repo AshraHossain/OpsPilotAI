@@ -1,0 +1,174 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
+    { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" },
+    { "type": "panel", "id": "timeseries", "name": "Time series", "version": "" },
+    { "type": "panel", "id": "stat", "name": "Stat", "version": "" },
+    { "type": "panel", "id": "gauge", "name": "Gauge", "version": "" },
+    { "type": "panel", "id": "table", "name": "Table", "version": "" }
+  ],
+  "annotations": { "list": [] },
+  "description": "OpsPilot AI — Agent performance, incident tracking, and eval metrics",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total Incidents Processed",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "sum(opspilot_incidents_total)",
+          "legendFormat": "Incidents"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Approval Gate Queue",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "options": { "colorMode": "background", "thresholds": { "steps": [{"color":"green","value":0},{"color":"yellow","value":3},{"color":"red","value":10}] } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "opspilot_approval_queue_size",
+          "legendFormat": "Pending Approvals"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Eval Pass Rate (last 24h)",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "options": { "minValue": 0, "maxValue": 100, "thresholds": { "steps": [{"color":"red","value":0},{"color":"yellow","value":70},{"color":"green","value":85}] } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "avg(opspilot_eval_pass_rate) * 100",
+          "legendFormat": "Pass Rate %"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Active Alerts",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "options": { "colorMode": "background", "thresholds": { "steps": [{"color":"green","value":0},{"color":"red","value":1}] } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "ALERTS{alertstate=\"firing\"}",
+          "legendFormat": "{{ alertname }}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Agent Workflow Latency (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "lineWidth": 2 } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.95, rate(opspilot_workflow_duration_seconds_bucket[5m]))",
+          "legendFormat": "{{ workflow }} p95"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.50, rate(opspilot_workflow_duration_seconds_bucket[5m]))",
+          "legendFormat": "{{ workflow }} p50"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Pod CPU Usage",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "fieldConfig": { "defaults": { "unit": "percent" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "100 * rate(container_cpu_usage_seconds_total{namespace=\"opspilot\"}[2m])",
+          "legendFormat": "{{ pod }}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Eval Pass Rate by Suite (last 7d)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "opspilot_eval_pass_rate",
+          "legendFormat": "{{ suite }}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Memory Usage",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "container_memory_working_set_bytes{namespace=\"opspilot\"}",
+          "legendFormat": "{{ pod }}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Recent Audit Events",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "options": { "sortBy": [{ "displayName": "Time", "desc": true }] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "opspilot_audit_events_total",
+          "legendFormat": "{{ workflow }} | {{ repo }} | {{ outcome }}"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": ["opspilot", "devops", "ai-agents"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "OpsPilot AI — Operations Dashboard",
+  "uid": "opspilot-main",
+  "version": 1
+}

@@ -1,0 +1,40 @@
+# OOMKill variant — fills memory until the container is killed
+# Apply with: kubectl apply -f infra/k8s/sample-app-oom.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-api
+  namespace: opspilot-demo
+  labels:
+    app: sample-api
+    version: oom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-api
+  template:
+    metadata:
+      labels:
+        app: sample-api
+    spec:
+      containers:
+        - name: sample-api
+          image: python:3.12-slim
+          command: ["python3", "-c"]
+          args:
+            - |
+              import time
+              print("Allocating memory until OOMKilled...")
+              data = []
+              while True:
+                  data.append(' ' * 10 * 1024 * 1024)  # 10MB chunks
+                  print(f"Allocated {len(data) * 10}MB")
+                  time.sleep(0.5)
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"

@@ -1,0 +1,38 @@
+# CrashLoop variant — triggers Incident Resolver agent
+# Apply with: kubectl apply -f infra/k8s/sample-app-crashloop.yaml
+# Revert with: kubectl apply -f infra/k8s/sample-app.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-api
+  namespace: opspilot-demo
+  labels:
+    app: sample-api
+    version: crashloop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sample-api
+  template:
+    metadata:
+      labels:
+        app: sample-api
+    spec:
+      containers:
+        - name: sample-api
+          image: busybox:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Starting up..."
+              sleep 3
+              echo "Simulating OOM crash..."
+              exit 137
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"

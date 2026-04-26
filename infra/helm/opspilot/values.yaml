@@ -1,0 +1,87 @@
+# Default values for opspilot Helm chart.
+# Override with: helm install opspilot ./infra/helm/opspilot -f my-values.yaml
+
+replicaCount: 2
+
+image:
+  repository: your-ecr-account.dkr.ecr.us-east-1.amazonaws.com/opspilot-ai
+  pullPolicy: IfNotPresent
+  tag: "latest"   # override with --set image.tag=$(git rev-parse --short HEAD)
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: opspilot-sa
+  annotations:
+    # IRSA annotation — set to your actual role ARN after eksctl creates it
+    eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/opspilot-irsa-role"
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: true
+  className: "alb"
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+  hosts:
+    - host: opspilot.your-domain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 8
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+env:
+  APP_ENV: production
+  GEMINI_MODEL: gemini/gemini-1.5-pro
+  AUDIT_BACKEND: dynamodb        # dynamodb | s3 | local
+  AUDIT_TABLE: opspilot-audit-trail
+  AUDIT_S3_BUCKET: opspilot-audit-logs
+
+# Secrets from AWS Secrets Manager (mounted via External Secrets Operator)
+# or set directly for local/staging:
+secretRef:
+  name: opspilot-secrets   # K8s secret name containing GOOGLE_API_KEY etc.
+
+prometheus:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    path: /metrics
+
+nodeSelector: {}
+tolerations: []
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - opspilot
+          topologyKey: kubernetes.io/hostname

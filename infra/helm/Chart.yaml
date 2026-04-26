@@ -1,0 +1,6 @@
+apiVersion: v2
+name: opspilot-ai
+description: AI DevOps Multi-Agent System — Helm chart for AWS EKS deployment
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

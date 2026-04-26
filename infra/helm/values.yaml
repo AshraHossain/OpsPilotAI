@@ -1,0 +1,50 @@
+replicaCount: 2
+
+image:
+  repository: YOUR_ECR_ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/opspilot-ai
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: true
+  className: "alb"
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+  hosts:
+    - host: opspilot.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "512Mi"
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+env:
+  APP_ENV: production
+  LOG_LEVEL: INFO
+  APPROVAL_GATE_ENABLED: "true"
+  PROMETHEUS_URL: http://prometheus:9090
+  ALERTMANAGER_URL: http://alertmanager:9093
+  K8S_NAMESPACE: default
+
+secrets:
+  # Values injected from AWS Secrets Manager / K8s Secret
+  OPENAI_API_KEY: ""
+  GITHUB_TOKEN: ""
+  GITHUB_WEBHOOK_SECRET: ""
