@@ -8,11 +8,9 @@ pydantic-settings>=2.3.0
 crewai>=0.51.0
 crewai-tools>=0.8.0
 
-# LLM & tool layer — Google Gemini
+# LLM & tool layer — Ollama via LiteLLM (bundled with crewai)
 langchain>=0.2.0
 langchain-community>=0.2.0
-langchain-google-genai>=1.0.0
-google-generativeai>=0.7.0
 
 # GitHub integration
 PyGithub>=2.3.0

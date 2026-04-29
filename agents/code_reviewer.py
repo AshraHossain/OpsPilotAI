@@ -1,8 +1,8 @@
 """
 Code Reviewer Agent
 """
-import os
 from crewai import Agent
+from config.settings import get_settings
 from tools import get_tools
 
 
@@ -18,7 +18,7 @@ def build_code_reviewer_agent() -> Agent:
             "testing strategy, and CI hygiene. You review PRs the way a principal "
             "engineer would: clear, direct, and focused on what actually matters."
         ),
-        llm=os.getenv("AGENT_MODEL", "ollama/gemma4:26b"),
+        llm=get_settings().agent_model,
         tools=get_tools("github"),
         verbose=True,
         allow_delegation=False,

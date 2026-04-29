@@ -2,7 +2,8 @@
 OpsPilot AI -- Demo Runner
 ==========================
 Runs all 4 agent workflows with mock data so you can see every agent
-fire and produce output without any real API credentials.
+fire and produce output.  Requires a running Ollama instance with the
+gemma4:26b model pulled -- no cloud API keys needed.
 
 Usage:
     python demo_runner.py                   # runs all 4 workflows
@@ -12,22 +13,20 @@ Usage:
     python demo_runner.py --workflow incident  # incident response only
 
 Requirements:
-    - GOOGLE_API_KEY set in .env (get free key at aistudio.google.com)
+    - Ollama running locally (ollama serve)
+    - Model pulled: ollama pull gemma4:26b
     - APP_ENV=development (default) -- uses mock tools automatically
 """
 import argparse
 import os
-import sys
 import time
 from dotenv import load_dotenv
 
 load_dotenv()
 
-if not os.getenv("GOOGLE_API_KEY"):
-    print("\nERROR: GOOGLE_API_KEY not set.")
-    print("   Copy .env.example -> .env and add your key.")
-    print("   Get a free key at: https://aistudio.google.com/app/apikey\n")
-    sys.exit(1)
+# Trigger settings load early so OLLAMA_API_BASE is exported before CrewAI init.
+from config.settings import get_settings
+get_settings()
 
 os.environ.setdefault("APP_ENV", "development")
 
@@ -141,10 +140,11 @@ def main():
     )
     args = parser.parse_args()
 
+    settings = get_settings()
     print("\n" + "#" * 70)
     print("  OpsPilot AI -- Demo Mode (APP_ENV={})".format(os.getenv("APP_ENV")))
-    print("  LLM: {}".format(os.getenv("AGENT_MODEL", "ollama/gemma4:26b")))
-    print("  All tools are mocked -- no real APIs called except Gemini.")
+    print("  LLM: {}  (base: {})".format(settings.agent_model, settings.ollama_api_base))
+    print("  All tools are mocked -- no real APIs called.")
     print("#" * 70)
 
     if args.workflow:

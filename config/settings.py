@@ -1,17 +1,21 @@
 """
 Central settings loaded from environment variables / .env file.
 """
+import os
 from functools import lru_cache
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # LLM
+    # LLM — local Ollama by default, no API key required
     agent_model: str = "ollama/gemma4:26b"
+    ollama_api_base: str = "http://localhost:11434"
+
+    # Optional cloud provider keys (only needed if switching AGENT_MODEL)
     openrouter_api_key: str = ""
     moonshot_api_key: str = ""
     google_api_key: str = ""
-    gemini_model: str = "gemini/gemini-2.5-flash"
 
     # GitHub
     github_token: str = ""
@@ -32,6 +36,12 @@ class Settings(BaseSettings):
     app_env: str = "development"
     log_level: str = "INFO"
     approval_gate_enabled: bool = True
+
+    @model_validator(mode="after")
+    def _export_ollama_env(self) -> "Settings":
+        # LiteLLM (used by CrewAI) reads OLLAMA_API_BASE to locate the local server.
+        os.environ.setdefault("OLLAMA_API_BASE", self.ollama_api_base)
+        return self
 
     class Config:
         env_file = ".env"

@@ -1,8 +1,8 @@
 """
 Infra Scaler Agent
 """
-import os
 from crewai import Agent
+from config.settings import get_settings
 from tools import get_tools
 
 
@@ -19,7 +19,7 @@ def build_infra_scaler_agent() -> Agent:
             "You understand HPA behavior, resource requests/limits, and the difference "
             "between a traffic spike that will self-resolve versus one requiring a replica increase."
         ),
-        llm=os.getenv("AGENT_MODEL", "ollama/gemma4:26b"),
+        llm=get_settings().agent_model,
         tools=get_tools("prometheus") + get_tools("kubernetes"),
         verbose=True,
         allow_delegation=False,
