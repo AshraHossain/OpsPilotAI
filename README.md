@@ -1,11 +1,13 @@
 # OpsPilot AI
 
-[![CI](https://github.com/your-org/opspilot-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/opspilot-ai/actions/workflows/ci.yml)
+[![CI](https://github.com/AshraHossain/OpsPilotAI/actions/workflows/ci.yml/badge.svg)](https://github.com/AshraHossain/OpsPilotAI/actions/workflows/ci.yml)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
-[![LLM: Gemini](https://img.shields.io/badge/LLM-Gemini%201.5%20Pro-orange.svg)](https://aistudio.google.com)
+[![LLM: Ollama](https://img.shields.io/badge/LLM-Ollama%20gemma4%3A26b-orange.svg)](https://ollama.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A **multi-agent DevOps control plane** built on [CrewAI](https://github.com/crewai/crewai) and Google Gemini. Four specialized AI agents collaborate to handle the most common on-call scenarios — automatically, with a human approval gate before any destructive action.
+A **multi-agent DevOps control plane** built on [CrewAI](https://github.com/crewai/crewai). Four specialized AI agents collaborate to handle the most common on-call scenarios — automatically, with a human approval gate before any destructive action.
+
+Runs **100% locally by default** using [Ollama](https://ollama.com) (gemma4:26b) — no API key or cloud account required. Swap to any cloud model (Claude, Gemini, OpenRouter, Moonshot) via a single env variable.
 
 ---
 
@@ -50,9 +52,15 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for full Mermaid diagrams and sequence fl
 
 ### 1. Prerequisites
 
+- [Ollama](https://ollama.com) installed and running
+- Python 3.12+
+
 ```bash
-git clone https://github.com/your-org/opspilot-ai
-cd opspilot-ai
+# Pull the default model
+ollama pull gemma4:26b
+
+git clone https://github.com/AshraHossain/OpsPilotAI
+cd OpsPilotAI
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
@@ -61,13 +69,12 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# Edit .env — only GOOGLE_API_KEY is required for local dev:
-#   GOOGLE_API_KEY=AIza...
-#   GEMINI_MODEL=gemini/gemini-1.5-pro
-#   APP_ENV=development
+# For local dev, no changes needed — Ollama runs by default:
+#   AGENT_MODEL=ollama/gemma4:26b
+#   OLLAMA_API_BASE=http://localhost:11434
 ```
 
-Get a free Gemini key at [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
+That's it. No API key required for local development.
 
 ### 3. Run the demo
 
@@ -83,10 +90,25 @@ python demo_runner.py --workflow incident
 
 ```bash
 uvicorn api.main:app --reload
-# http://localhost:8000/docs  — Swagger UI
+# http://localhost:8000/docs     — Swagger UI
 # http://localhost:8000/metrics  — Prometheus metrics
 # http://localhost:8000/audit    — Audit trail
 ```
+
+---
+
+## Switching LLM Providers
+
+Set `AGENT_MODEL` in your `.env` to swap models with no code changes:
+
+| Provider | Example value |
+|----------|--------------|
+| **Ollama (local, default)** | `ollama/gemma4:26b` |
+| Google Gemini | `gemini/gemini-2.5-flash` |
+| Claude via OpenRouter | `openrouter/anthropic/claude-3.5-sonnet` |
+| Kimi / Moonshot | `moonshot/moonshot-v1-32k` |
+
+Cloud providers also need their respective API key set (see `.env.example`).
 
 ---
 
@@ -194,11 +216,12 @@ python scripts/audit_viewer.py --tail   # live follow
 
 ```
 OpsPilotAI/
-├── agents/           ← 4 CrewAI agents (all use GEMINI_MODEL)
+├── agents/           ← 4 CrewAI agents (all use AGENT_MODEL)
 ├── tools/            ← real / mock tool factory (APP_ENV switching)
 ├── workflows/crew.py ← 4 workflow entry points + audit trail wiring
 ├── api/main.py       ← FastAPI: webhooks, /approve, /metrics, /audit
 ├── audit/trail.py    ← Immutable event log (DynamoDB / S3 / local)
+├── config/settings.py← Pydantic settings — env-driven, Ollama default
 ├── eval/             ← 20 eval cases across 4 suites
 ├── scripts/          ← demo, k8s, load, approval gate, audit viewer
 ├── infra/
@@ -227,8 +250,11 @@ OpsPilotAI/
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `GOOGLE_API_KEY` | Yes | — | Gemini API key |
-| `GEMINI_MODEL` | No | `gemini/gemini-1.5-pro` | Model string |
+| `AGENT_MODEL` | No | `ollama/gemma4:26b` | LLM model string (any LiteLLM-compatible) |
+| `OLLAMA_API_BASE` | No | `http://localhost:11434` | Ollama server URL |
+| `OPENROUTER_API_KEY` | Cloud only | — | OpenRouter API key |
+| `MOONSHOT_API_KEY` | Cloud only | — | Kimi / Moonshot AI key |
+| `GOOGLE_API_KEY` | Cloud only | — | Google Gemini key |
 | `APP_ENV` | No | `development` | `development` / `staging` / `production` |
 | `GITHUB_TOKEN` | Staging+ | — | GitHub PAT for real tool calls |
 | `GITHUB_WEBHOOK_SECRET` | Staging+ | — | Webhook HMAC secret |
@@ -241,7 +267,8 @@ OpsPilotAI/
 ## Tech Stack
 
 - **Agent framework:** [CrewAI](https://github.com/crewai/crewai)
-- **LLM:** Google Gemini 1.5 Pro via `langchain-google-genai`
+- **LLM (default):** [Ollama](https://ollama.com) running gemma4:26b locally — no API key
+- **LLM (cloud options):** Google Gemini, Claude via OpenRouter, Kimi/Moonshot
 - **API:** FastAPI + uvicorn
 - **Metrics:** prometheus-client
 - **K8s:** kubernetes Python SDK + minikube (local) / EKS (prod)
